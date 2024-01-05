@@ -1,0 +1,131 @@
+/*
+  Autoclicker device
+
+  Hardware
+    Board: Leonardo, UNO R4 Minima, UNO R4 wifi, Due, GIGA R1 wifi
+
+    A lcd Shield was indtended to be used with this project. But feel free to change the code to fit other hardware or add other features
+    and functionality that may suit your needs better.
+
+    if you do want to use a lcd shield, here is the link to the one originally used in this project but feel free to change the code to 
+    fit other ones that may not have the same pin out.
+    https://a.co/d/i0Q1XOj
+    
+  Created 4 Jan 2024
+
+  by American_store
+*/
+
+#include <LiquidCrystal.h>
+#include "Mouse.h"
+
+const int rs = 8, en = 9, d4 = 4, d5 = 5, d6 = 6, d7 = 7;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+
+int analogPin = A0 ; //button input pin
+int val = 0; //what button is pressed
+
+bool act = 0; // if clicker is active
+long Delay = 25;
+int inc = 5; // how much dalay is incremented by
+
+void setAct(){ // actives clicker and updates screen
+  lcd.setCursor(5, 1);
+  if (act == true) {
+    act = false; 
+    lcd.print("No ");
+  }else if (act == false) {
+    act = true;
+    lcd.print("Yes");
+  }
+}
+
+void setInc(int vals) { // changes how much delay is changed by and refreshes screen
+  lcd.setCursor(13, 1);
+  lcd.print("   ");
+  if (vals == 1 && (inc + 5) < 999) {
+    if (inc == 1) { // from 1 to 5
+      inc += 4;
+    } else {
+      inc += 5;
+    }
+  }
+  if (vals == 2 && inc > 4) {
+    if (inc == 5) { // from 5 to 1
+      inc -= 4;
+    } else {
+      inc -= 5;
+    }
+  }
+  lcd.setCursor(13, 1);
+  lcd.print(inc);
+}
+
+void setCps(int vals) { // changes delay and refreshes screen
+  lcd.setCursor(6, 0);
+  lcd.print("          ");
+  if (vals == 1 && (Delay + inc) < 1000000000) { // 2nd condition stop at the max digits the screen can hold
+    Delay += inc; // increase delay
+  }
+  if (vals == 2 && (Delay - inc) > 24) { // 2nd condition stops at 25, any lower freezes 
+    Delay -= inc; // decrease delay
+  }
+  lcd.setCursor(6, 0);
+  lcd.print(Delay);
+}
+
+void setup() { // set up display at start
+  lcd.begin(16, 2);
+  lcd.setCursor(0, 0);
+  lcd.print("Delay:");
+  setCps(0);
+  lcd.setCursor(0, 1);
+  lcd.print("actv:No");
+  lcd.setCursor(9, 1);
+  lcd.print("inc:");
+  setInc(0);
+}
+
+void loop() {
+  val = map(analogRead(analogPin), 0, 1024, 0, 10); //analogRead(analogPin); // sets up buttons
+  lcd.setCursor(0, 0);
+  switch (val) {
+    case 0 : //right is pressed
+      if (press == 1){
+        setInc(1);
+        press = 0;
+      }
+      break;
+    case 1 : // up is pressed
+      if (press == 1) {
+        setCps(1);
+        press = 0;
+      }
+      break;
+    case 3 : // down is pressed 
+      if (press == 1) {
+        setCps(2);
+        press = 0;
+      }
+      break;
+    case 4 : //left is pressed
+      if (press == 1) {
+        setInc(2);
+        press = 0;
+      }
+      break;
+    case 7 : // select is pressed
+      if (press == 1) {
+        setAct();
+        press = 0;
+      }
+      break;
+    case 9 : // nothing is pressed
+      press = 1; // reset button toggles
+      if (act == 1) {
+        Mouse.click();
+        delay(25); //time between each click lowest value 25
+      }
+      break;
+  }
+}
